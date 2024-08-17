@@ -28,3 +28,14 @@ class BaseDataLoader:
             self.dataframe.to_sql(table_name, engine, if_exists='replace', index=False)
         else:
             raise DataLoadError("No data to save. Please load the data first.")
+class TrainDataLoader(BaseDataLoader):
+    """Class for loading and handling training data."""
+    pass
+
+class IdealFunctionsLoader(BaseDataLoader):
+    """Class for loading and handling ideal functions data."""
+    pass
+
+class TestDataLoader(BaseDataLoader):
+    """Class for loading and handling test data."""
+    pass
