@@ -150,3 +150,39 @@ if __name__ == "__main__":
     # Visualize results
     viz = Visualization(train_loader.dataframe, ideal_loader.dataframe, test_results_df)
     viz.plot_results()
+
+import unittest
+
+class TestFunctionMapping(unittest.TestCase):
+
+    def setUp(self):
+        # Create sample data
+        self.train_df = pd.DataFrame({
+            'x': [1, 2, 3],
+            'y1': [2, 4, 6],
+            'y2': [3, 6, 9]
+        })
+        self.ideal_funcs_df = pd.DataFrame({
+            'x': [1, 2, 3],
+            'func1': [2.1, 4.1, 6.1],
+            'func2': [3.1, 6.1, 9.1]
+        })
+
+        self.mapper = FunctionMapper(self.train_df, self.ideal_funcs_df)
+
+    def test_least_squares(self):
+        y_true = np.array([1, 2, 3])
+        y_pred = np.array([1, 2, 2.9])
+        self.assertAlmostEqual(self.mapper.least_squares(y_true, y_pred), 0.01)
+
+    def test_find_best_fit(self):
+        best_fits = self.mapper.find_best_fit()
+        self.assertEqual(len(best_fits), 2)  # Ensure two functions are selected
+
+    def test_map_test_data(self):
+        test_df = pd.DataFrame({'x': [1], 'y': [2.1]})
+        test_results_df = self.mapper.map_test_data(test_df, engine)
+        self.assertGreater(len(test_results_df), 0)  # Ensure test data is mapped
+
+if __name__ == '__main__':
+    unittest.main()
