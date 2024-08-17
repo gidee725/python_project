@@ -83,3 +83,70 @@ class FunctionMapper:
         results_df = pd.DataFrame(results)
         results_df.to_sql('test_data_results', engine, if_exists='replace', index=False)
         return results_df
+    
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+class Visualization:
+    """Class for visualizing the results using Matplotlib and Seaborn."""
+
+    def __init__(self, train_df, ideal_funcs_df, test_results_df):
+        self.train_df = train_df
+        self.ideal_funcs_df = ideal_funcs_df
+        self.test_results_df = test_results_df
+
+    def plot_results(self, filename="results.png"):
+        """Create and save the plot using Matplotlib and Seaborn."""
+        plt.figure(figsize=(14, 8))
+        
+        # Plot training data
+        for col in self.train_df.columns[1:]:
+            sns.lineplot(x=self.train_df['x'], y=self.train_df[col], label=f"Train {col}", linewidth=2)
+        
+        # Plot ideal functions
+        for func in self.ideal_funcs_df.columns[1:]:
+            sns.lineplot(x=self.ideal_funcs_df['x'], y=self.ideal_funcs_df[func], label=f"Ideal {func}", linestyle='--', linewidth=2)
+        
+        # Plot test results
+        plt.scatter(self.test_results_df['x'], self.test_results_df['y'], color='red', s=100, label="Test Mapped to Ideal")
+        
+        plt.title("Function Mapping and Deviations")
+        plt.xlabel("X")
+        plt.ylabel("Y")
+        plt.legend(loc="upper left")
+        
+        # Save the plot to the current directory
+        plt.savefig(filename)
+        
+        # Display the plot
+        plt.show()
+if __name__ == "__main__":
+    # Setup SQLite engine
+    engine = create_engine('sqlite:///functions.db')
+
+    # Load data
+    train_loader = TrainDataLoader('D:/kazi/Bin it/Dataset2/train.csv')
+    train_loader.load_data()
+    train_loader.save_to_db('training_data', engine)
+
+    ideal_loader = IdealFunctionsLoader('D:/kazi/Bin it/Dataset2/ideal.csv')
+    ideal_loader.load_data()
+    ideal_loader.save_to_db('ideal_functions', engine)
+
+    test_loader = TestDataLoader('D:/kazi/Bin it/Dataset2/test.csv')
+    test_loader.load_data()
+    test_loader.save_to_db('test_data', engine)
+
+    # Map functions
+    mapper = FunctionMapper(train_loader.dataframe, ideal_loader.dataframe)
+    best_fits = mapper.find_best_fit()
+    test_results_df = mapper.map_test_data(test_loader.dataframe, engine)
+
+    # Print the best-fit functions
+    print("Best Fit Functions:")
+    for train_col, ideal_func in best_fits.items():
+        print(f"Training Column '{train_col}' is best fit by Ideal Function '{ideal_func}'")
+
+    # Visualize results
+    viz = Visualization(train_loader.dataframe, ideal_loader.dataframe, test_results_df)
+    viz.plot_results()
